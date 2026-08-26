@@ -1,0 +1,37 @@
+{
+  "appId": "com.metamovidas.sherzod",
+  "appName": "Chess Puzzles",
+  "webDir": "dist",
+  "backgroundColor": "#0e1a12",
+  "android": {
+    "path": "android-app",
+    "allowMixedContent": false,
+    "backgroundColor": "#0e1a12",
+    "webContentsDebuggingEnabled": true,
+    "appendUserAgent": "SherzodAndroid/1.0"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 0,
+      "backgroundColor": "#0e1a12",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": false,
+      "splashImmersive": false,
+      "useDialog": false
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0e1a12"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true,
+      "style": "DARK"
+    }
+  }
+}
