@@ -1,0 +1,33 @@
+{
+  "name": "sherzod-chess-puzzles",
+  "private": true,
+  "version": "1.0.5",
+  "type": "module",
+  "description": "Sherzod — chess composition puzzles by Sherzod Khaydarbekov",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "deploy": "npx netlify-cli deploy --prod --dir=dist",
+    "patch:android": "node scripts/patch-android.cjs",
+    "icons": "node scripts/generate-icons.cjs",
+    "sync": "npm run build && npx cap sync android && node scripts/patch-android.cjs",
+    "apk": "node scripts/build-android.cjs",
+    "aab": "node scripts/build-android.cjs --aab"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.8",
+    "@capacitor/app": "7.1.2",
+    "@capacitor/core": "7.6.8",
+    "@capacitor/haptics": "7.0.5",
+    "@capacitor/keyboard": "7.0.6",
+    "@capacitor/splash-screen": "7.0.5",
+    "@capacitor/status-bar": "7.0.6"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.8",
+    "@resvg/resvg-js": "^2.6.2",
+    "typescript": "~5.8.2",
+    "vite": "^7.1.0"
+  }
+}
