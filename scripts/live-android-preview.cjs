@@ -15,7 +15,7 @@ const ADB = path.join(SDK, "platform-tools", "adb.exe");
 const APK = fs.existsSync(path.join(ROOT, "Chess-Puzzles.apk"))
   ? path.join(ROOT, "Chess-Puzzles.apk")
   : path.join(ROOT, "dist-android", "Sherzod-1.0.0.apk");
-const PACKAGE = "com.metamovidas.sherzod";
+const PACKAGE = "com.metamovidas.chesspuzzles";
 const ACTIVITY = `${PACKAGE}/.MainActivity`;
 const CACHE = path.join(ROOT, "_boards", "live_frame.png");
 

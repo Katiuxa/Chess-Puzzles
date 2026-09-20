@@ -1,7 +1,7 @@
 {
   "name": "sherzod-chess-puzzles",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.18",
   "type": "module",
   "description": "Sherzod — chess composition puzzles by Sherzod Khaydarbekov",
   "scripts": {

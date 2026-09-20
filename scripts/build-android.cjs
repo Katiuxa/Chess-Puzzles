@@ -50,20 +50,17 @@ run(gw, ["assembleRelease"], ANDROID);
 if (wantAab) run(gw, ["bundleRelease"], ANDROID);
 
 fs.mkdirSync(OUT, { recursive: true });
-copyIf(
-  path.join(ANDROID, "app", "build", "outputs", "apk", "release", "app-release.apk"),
-  path.join(OUT, "Chess-Puzzles-1.0.4.apk")
-);
-copyIf(
-  path.join(ANDROID, "app", "build", "outputs", "apk", "release", "app-release.apk"),
-  path.join(ROOT, "Chess-Puzzles-1.0.4.apk")
-);
-copyIf(
-  path.join(ANDROID, "app", "build", "outputs", "apk", "release", "app-release.apk"),
-  path.join(ROOT, "Chess-Puzzles.apk")
-);
-copyIf(
-  path.join(ANDROID, "app", "build", "outputs", "bundle", "release", "app-release.aab"),
-  path.join(OUT, "Chess-Puzzles-1.0.4.aab")
-);
-console.log("Listo en " + OUT);
+const ver = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version || "1.0.0";
+const apkName = `Chess-Puzzles-${ver}.apk`;
+const aabName = `Chess-Puzzles-${ver}.aab`;
+const apkSrc = path.join(ANDROID, "app", "build", "outputs", "apk", "release", "app-release.apk");
+const aabSrc = path.join(ANDROID, "app", "build", "outputs", "bundle", "release", "app-release.aab");
+copyIf(apkSrc, path.join(OUT, apkName));
+copyIf(apkSrc, path.join(ROOT, apkName));
+copyIf(apkSrc, path.join(ROOT, "Chess-Puzzles.apk"));
+const desktop = path.join(process.env.USERPROFILE || "", "Desktop", apkName);
+if (process.env.USERPROFILE) copyIf(apkSrc, desktop);
+copyIf(aabSrc, path.join(OUT, aabName));
+copyIf(aabSrc, path.join(ROOT, aabName));
+if (process.env.USERPROFILE) copyIf(aabSrc, path.join(process.env.USERPROFILE, "Desktop", aabName));
+console.log("Listo en " + OUT + " (v" + ver + ")");

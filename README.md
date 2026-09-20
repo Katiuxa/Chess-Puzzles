@@ -1,18 +1,25 @@
 # Chess Puzzles
 
-Puzles de composición de ajedrez (Sherzod Khaydarbekov).
+Puzles de composición de Sherzod Khaydarbekov.
 
-**Jugar:** https://katiuxa.github.io/Chess-Puzzles/
+## Web
 
-Dos Android:
+https://katiuxa.github.io/Chess-Puzzles/
 
-- `android-app/` — Capacitor (la web empaquetada para Play Store). v1.0.5
-- `android/` — app nativa Kotlin/Compose (otra línea; pendiente de pulir)
-
-La barra de navegación del sistema no cubre la UI en el wrapper Capacitor (`WindowInsets`).
+Fuentes en `src/`. GitHub Pages las compila con Vite.
 
 ```bash
 npm ci
 npm run dev
+```
+
+## Android
+
+Capacitor en `android-app/`. Versión **1.0.18**.
+
+```bash
+npm ci
 npm run apk
 ```
+
+Keystore de Play Store fuera de git.
