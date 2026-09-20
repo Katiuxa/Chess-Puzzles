@@ -7,6 +7,7 @@ import {
   legalMoves,
   pieceExists,
   pieceOnTarget,
+  rowFilledWith,
 } from "./chess";
 
 export class Game {
@@ -93,14 +94,16 @@ export class Game {
   }
 
   undo(): boolean {
-    if (this.won || this.history.length === 0) return false;
+    if (this.history.length === 0) return false;
     const prev = this.history.pop();
     if (!prev) return false;
     this.board = prev.board;
     this.phases = new Set(prev.phases);
     this.lastCapture = prev.lastCapture;
     this.moves = prev.moves;
+    this.won = false;
     this.deselect();
+    if (this.moves > 0) this.startTimer();
     return true;
   }
 
@@ -135,9 +138,10 @@ export class Game {
     if (this.puzzle.win.type !== "groups-on-red") return;
     const group = groupsOnRed(this.board);
     if (!group) return;
-    // PDF: "put all the shapes in turn" — accept groups in listed order only.
-    const next = this.puzzle.win.groups.find((g) => !this.phases.has(g));
-    if (next === group) this.phases.add(group);
+    // Any complete set of 4 matching pieces on the reds counts, in any order.
+    if (this.puzzle.win.groups.includes(group)) {
+      this.phases.add(group);
+    }
   }
 
   private checkWin(captured: Piece | null): boolean {
@@ -150,6 +154,12 @@ export class Game {
     }
     if (win.type === "piece-on-target") {
       return pieceOnTarget(this.board, win.kind, win.color);
+    }
+    if (win.type === "piece-on-target-restored") {
+      if (!pieceOnTarget(this.board, win.kind, win.color)) return false;
+      return win.homeRows.every(({ row, kind }) =>
+        rowFilledWith(this.board, row, kind),
+      );
     }
     if (win.type === "groups-on-red") {
       return win.groups.every((g) => this.phases.has(g));
