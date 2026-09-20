@@ -26,8 +26,14 @@ type Dict = {
   navPuzzles: string;
   navAbout: string;
   language: string;
+  soundOn: string;
+  soundOff: string;
   gallery: string;
   howToPlay: string;
+  howObjectiveTitle: string;
+  howObjectiveBody: string;
+  howRulesTitle: string;
+  howRulesBody: string;
   homeCredit: string;
   footer: string;
   minMoves: string;
@@ -44,7 +50,9 @@ type Dict = {
   solved: string;
   complete: string;
   victoryLine: string;
-  groupsPlaced: string;
+  piecesPlaced: string;
+  bestAttempt: string;
+  bestAttemptEmpty: string;
   blocked: string;
   square: string;
   white: string;
@@ -68,15 +76,23 @@ const en: Dict = {
   metaDescription:
     "Original single-player chess compositions by Sherzod Khaydarbekov. Standard moves. One objective.",
   metaAbout: "About — Sherzod Khaydarbekov",
-  homeTitle: "Chess puzzles",
+  homeTitle: "Chess Puzzles",
   homeLede: "Four quiet studies. Soft moves. One elegant objective.",
   play: "Play",
   level: "Level",
   navPuzzles: "Puzzles",
   navAbout: "About",
   language: "Language",
+  soundOn: "Unmute sound",
+  soundOff: "Mute sound",
   gallery: "Puzzles",
   howToPlay: "How to play",
+  howObjectiveTitle: "Objective & mechanics",
+  howObjectiveBody:
+    "Your mission is to solve the objective on each board. Every puzzle uses a special board with blocked squares or obstacles.",
+  howRulesTitle: "Rules",
+  howRulesBody:
+    "Pieces move with classic chess moves (the knight’s leap, the bishop’s diagonals, or the rook’s straight lines).",
   homeCredit: "Made with ❤️ by Metamovidas",
   footer: "Puzzles by Sherzod Khaydarbekov",
   minMoves: "Minimum {{par}} moves",
@@ -93,7 +109,9 @@ const en: Dict = {
   solved: "Solved",
   complete: "Composition complete.",
   victoryLine: "{{moves}} moves · {{time}} · author’s line {{par}}",
-  groupsPlaced: "Groups placed",
+  piecesPlaced: "Pieces placed",
+  bestAttempt: "Best attempt: {{moves}} moves",
+  bestAttemptEmpty: "Best attempt: —",
   blocked: "Blocked",
   square: "Row {{r}}, column {{c}}",
   white: "White",
@@ -128,15 +146,15 @@ const en: Dict = {
     },
     "four-square": {
       title: "Four Square",
-      goal: "Put all the shapes in turn into the 4 red squares.",
+      goal: "Put each set of pieces on the 4 red squares (knights, bishops, and rooks). Any order is fine.",
       instruction:
-        "Use standard chess moves. No captures. Place the four knights on the red squares, then the bishops, then the rooks. Each group must fill all four reds before the next counts.",
+        "Use standard chess moves. No captures. Whenever all four red squares hold the same piece type, that set counts. Do this for knights, bishops, and rooks — in any order — to finish.",
     },
     "queen-moves": {
       title: "Queen Moves",
-      goal: "Get the queen to the empty place.",
+      goal: "Get the queen to the empty place and restore the starting rows: rooks on top, bishops below.",
       instruction:
-        "Use standard chess moves. No captures. The queen starts at the lower left; the vacant square at the lower right is the destination.",
+        "Use standard chess moves. No captures. The queen starts at the lower left; the vacant square at the lower right is her destination. Win only when she sits there and the top row is all rooks again with a full bishop row beneath (order within each row free).",
     },
   },
 };
@@ -153,14 +171,22 @@ const es: Dict = {
   navPuzzles: "Puzzles",
   navAbout: "Acerca de",
   language: "Idioma",
+  soundOn: "Activar sonido",
+  soundOff: "Silenciar sonido",
   gallery: "Puzzles",
   howToPlay: "Cómo jugar",
+  howObjectiveTitle: "Objetivo y Mecánica",
+  howObjectiveBody:
+    "Tu misión es resolver el objetivo propuesto en cada tablero. Cada puzle se presenta en un tablero especial con casillas bloqueadas u obstáculos.",
+  howRulesTitle: "Reglas",
+  howRulesBody:
+    "Las piezas se mueven utilizando los movimientos clásicos del ajedrez (el salto del caballo, las diagonales del alfil o las líneas rectas de la torre).",
   homeCredit: "Made with ❤️ by Metamovidas",
   footer: "Puzzles de Sherzod Khaydarbekov",
   minMoves: "Mínimo {{par}} movimientos",
   back: "Todos los puzzles",
-  authorLine: "Línea del autor {{par}} jugadas",
-  moves: "Jugadas",
+  authorLine: "Línea del autor {{par}} movimientos",
+  moves: "Movimientos",
   time: "Tiempo",
   par: "Par",
   undo: "Deshacer",
@@ -170,8 +196,10 @@ const es: Dict = {
   onPar: "En par o por debajo",
   solved: "Resuelto",
   complete: "Composición terminada.",
-  victoryLine: "{{moves}} jugadas · {{time}} · línea del autor {{par}}",
-  groupsPlaced: "Grupos colocados",
+  victoryLine: "{{moves}} movimientos · {{time}} · línea del autor {{par}}",
+  piecesPlaced: "Piezas colocadas",
+  bestAttempt: "Mejor intento: {{moves}} movimientos",
+  bestAttemptEmpty: "Mejor intento: —",
   blocked: "Bloqueada",
   square: "Fila {{r}}, columna {{c}}",
   white: "Blanco",
@@ -206,15 +234,15 @@ const es: Dict = {
     },
     "four-square": {
       title: "Cuatro casillas",
-      goal: "Coloca todas las figuras, por turnos, en las 4 casillas rojas.",
+      goal: "Coloca cada tipo de pieza en las 4 casillas rojas (caballos, alfiles y torres). El orden da igual.",
       instruction:
-        "Usa los movimientos habituales del ajedrez. Sin capturas. Coloca los cuatro caballos en las casillas rojas, luego los alfiles y después las torres. Cada grupo debe llenar las cuatro rojas antes de que cuente el siguiente.",
+        "Usa los movimientos habituales del ajedrez. Sin capturas. Cuando las cuatro casillas rojas tengan el mismo tipo de pieza, ese conjunto cuenta. Hazlo con caballos, alfiles y torres — en cualquier orden — para terminar.",
     },
     "queen-moves": {
       title: "Movimientos de dama",
-      goal: "Lleva la dama a la casilla vacía.",
+      goal: "Lleva la dama a la casilla vacía y restaura las filas iniciales: torres arriba y alfiles abajo.",
       instruction:
-        "Usa los movimientos habituales del ajedrez. Sin capturas. La dama empieza abajo a la izquierda; la casilla vacía abajo a la derecha es el destino.",
+        "Usa los movimientos habituales del ajedrez. Sin capturas. La dama empieza abajo a la izquierda; la casilla vacía abajo a la derecha es el destino. Ganas solo cuando está ahí y la fila de arriba vuelve a ser de torres con una fila de alfiles debajo (el orden dentro de cada fila es libre).",
     },
   },
 };
@@ -231,8 +259,16 @@ const fr: Dict = {
   navPuzzles: "Puzzles",
   navAbout: "À propos",
   language: "Langue",
+  soundOn: "Activer le son",
+  soundOff: "Couper le son",
   gallery: "Puzzles",
   howToPlay: "Comment jouer",
+  howObjectiveTitle: "Objectif et mécanique",
+  howObjectiveBody:
+    "Votre mission est de résoudre l’objectif proposé sur chaque plateau. Chaque puzzle se présente sur un plateau spécial avec des cases bloquées ou des obstacles.",
+  howRulesTitle: "Règles",
+  howRulesBody:
+    "Les pièces se déplacent avec les coups classiques des échecs (le saut du cavalier, les diagonales du fou ou les lignes droites de la tour).",
   homeCredit: "Made with ❤️ by Metamovidas",
   footer: "Puzzles de Sherzod Khaydarbekov",
   minMoves: "Minimum {{par}} coups",
@@ -249,7 +285,9 @@ const fr: Dict = {
   solved: "Résolu",
   complete: "Composition achevée.",
   victoryLine: "{{moves}} coups · {{time}} · ligne de l’auteur {{par}}",
-  groupsPlaced: "Groupes placés",
+  piecesPlaced: "Pièces placées",
+  bestAttempt: "Meilleure tentative : {{moves}} coups",
+  bestAttemptEmpty: "Meilleure tentative : —",
   blocked: "Bloquée",
   square: "Rangée {{r}}, colonne {{c}}",
   white: "Blanc",
@@ -284,15 +322,15 @@ const fr: Dict = {
     },
     "four-square": {
       title: "Quatre cases",
-      goal: "Placez toutes les formes, à tour de rôle, sur les 4 cases rouges.",
+      goal: "Placez chaque type de pièces sur les 4 cases rouges (cavaliers, fous et tours). L’ordre n’importe pas.",
       instruction:
-        "Utilisez les coups habituels des échecs. Sans prises. Placez les quatre cavaliers sur les cases rouges, puis les fous, puis les tours. Chaque groupe doit remplir les quatre rouges avant que le suivant ne compte.",
+        "Utilisez les coups habituels des échecs. Sans prises. Dès que les quatre cases rouges portent le même type de pièce, ce jeu compte. Faites-le avec cavaliers, fous et tours — dans n’importe quel ordre — pour terminer.",
     },
     "queen-moves": {
       title: "Coups de dame",
-      goal: "Amenez la dame sur la case vide.",
+      goal: "Amenez la dame sur la case vide et restaurez les rangées de départ : tours en haut, fous en bas.",
       instruction:
-        "Utilisez les coups habituels des échecs. Sans prises. La dame part en bas à gauche ; la case vide en bas à droite est la destination.",
+        "Utilisez les coups habituels des échecs. Sans prises. La dame part en bas à gauche ; la case vide en bas à droite est la destination. Victoire seulement quand elle y est et que la rangée du haut est à nouveau pleine de tours, avec une rangée de fous en dessous (ordre libre dans chaque rangée).",
     },
   },
 };
@@ -309,8 +347,16 @@ const ru: Dict = {
   navPuzzles: "Задачи",
   navAbout: "О проекте",
   language: "Язык",
+  soundOn: "Включить звук",
+  soundOff: "Выключить звук",
   gallery: "Задачи",
   howToPlay: "Как играть",
+  howObjectiveTitle: "Цель и механика",
+  howObjectiveBody:
+    "Ваша задача — выполнить цель на каждой доске. Каждая задача идёт на особой доске с заблокированными клетками или препятствиями.",
+  howRulesTitle: "Правила",
+  howRulesBody:
+    "Фигуры ходят классическими шахматными ходами (прыжок коня, диагонали слона или прямые линии ладьи).",
   homeCredit: "Made with ❤️ by Metamovidas",
   footer: "Puzzles Шерзода Хайдарбекова",
   minMoves: "Минимум {{par}} ходов",
@@ -327,7 +373,9 @@ const ru: Dict = {
   solved: "Решено",
   complete: "Композиция решена.",
   victoryLine: "{{moves}} ходов · {{time}} · авторская линия {{par}}",
-  groupsPlaced: "Расставленные группы",
+  piecesPlaced: "Фигуры расставлены",
+  bestAttempt: "Лучшая попытка: {{moves}} ходов",
+  bestAttemptEmpty: "Лучшая попытка: —",
   blocked: "Закрыто",
   square: "Ряд {{r}}, столбец {{c}}",
   white: "Белые",
@@ -362,15 +410,15 @@ const ru: Dict = {
     },
     "four-square": {
       title: "Четыре клетки",
-      goal: "По очереди поставьте все фигуры на четыре красные клетки.",
+      goal: "Поставьте каждый тип фигур на 4 красные клетки (кони, слоны и ладьи). Порядок не важен.",
       instruction:
-        "Ходите как в обычных шахматах. Без взятий. Сначала займите красные клетки четырьмя конями, затем слонами, затем ладьями. Каждая группа должна заполнить все четыре красные клетки, прежде чем засчитается следующая.",
+        "Ходите как в обычных шахматах. Без взятий. Когда все четыре красные клетки заняты одним типом фигур, этот набор засчитывается. Сделайте это конями, слонами и ладьями — в любом порядке — чтобы закончить.",
     },
     "queen-moves": {
       title: "Ходы ферзя",
-      goal: "Приведите ферзя на пустую клетку.",
+      goal: "Приведите ферзя на пустую клетку и восстановите начальные ряды: ладьи сверху, слоны снизу.",
       instruction:
-        "Ходите как в обычных шахматах. Без взятий. Ферзь начинает слева внизу; пустая клетка справа внизу — цель.",
+        "Ходите как в обычных шахматах. Без взятий. Ферзь начинает слева внизу; пустая клетка справа внизу — цель. Победа только когда он там, верхний ряд снова из ладей, а под ним полный ряд слонов (порядок внутри ряда свободный).",
     },
   },
 };

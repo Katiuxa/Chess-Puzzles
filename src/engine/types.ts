@@ -22,6 +22,13 @@ export interface Pos {
 
 export type WinKind =
   | { type: "piece-on-target"; kind: PieceKind; color: Color }
+  | {
+      type: "piece-on-target-restored";
+      kind: PieceKind;
+      color: Color;
+      /** Playable cells in these rows must be filled with that kind (order within the row free). */
+      homeRows: Array<{ row: number; kind: PieceKind }>;
+    }
   | { type: "capture"; attacker: PieceKind; victim: PieceKind }
   | { type: "groups-on-red"; groups: PieceKind[] };
 

@@ -44,8 +44,8 @@ export const puzzles: Puzzle[] = [
     layout: ["BBBBN", "RRRR.", "PPPPx", "xxxxp"],
   }),
 
-  // 4 Square — put all shapes in turn into the 4 red squares; author’s line 73.
-  // Figures: 4 Knights, 4 Bishops, 4 Rooks. Complete N, then B, then R on the reds.
+  // 4 Square — fill the 4 red squares with each piece type (any order); author’s line 73.
+  // Figures: 4 Knights, 4 Bishops, 4 Rooks. Each completed set on the reds is remembered.
   puzzle({
     id: "four-square",
     par: 73,
@@ -58,7 +58,8 @@ export const puzzles: Puzzle[] = [
     layout: ["#xx#", "NNNN", "BBBB", "RRRR", "#xx#"],
   }),
 
-  // Queen Moves — get the Queen to the empty place; author’s line 34.
+  // Queen Moves — queen on the empty square AND formation restored:
+  // a full rook row on top, a full bishop row below; author’s line 34.
   // Figures: 1 Queen, 5 Bishops, 5 Rooks.
   puzzle({
     id: "queen-moves",
@@ -67,7 +68,15 @@ export const puzzles: Puzzle[] = [
     rows: 3,
     cols: 5,
     palette: "gold",
-    win: { type: "piece-on-target", kind: "Q", color: "w" },
+    win: {
+      type: "piece-on-target-restored",
+      kind: "Q",
+      color: "w",
+      homeRows: [
+        { row: 0, kind: "R" },
+        { row: 1, kind: "B" },
+      ],
+    },
     captures: [],
     layout: ["RRRRR", "BBBBB", "Qxxx*"],
   }),

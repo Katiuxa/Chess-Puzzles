@@ -139,6 +139,23 @@ export function pieceOnTarget(
   return false;
 }
 
+/** Every non-blocked cell in `row` holds a piece of `kind` (any order). */
+export function rowFilledWith(
+  board: Cell[][],
+  row: number,
+  kind: PieceKind,
+): boolean {
+  const line = board[row];
+  if (!line) return false;
+  let saw = 0;
+  for (const cell of line) {
+    if (cell.blocked) continue;
+    if (!cell.piece || cell.piece.kind !== kind) return false;
+    saw += 1;
+  }
+  return saw > 0;
+}
+
 export function pieceExists(
   board: Cell[][],
   kind: PieceKind,

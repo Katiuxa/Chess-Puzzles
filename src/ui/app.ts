@@ -2,7 +2,7 @@ import type { Cell, PieceKind, Pos, Puzzle } from "../engine/types";
 import { Game, formatTime } from "../engine/game";
 import { puzzles, puzzleById } from "../puzzles/data";
 import { pieceSrc } from "./pieces";
-import { playSfx, preloadSfx } from "./sfx";
+import { isMuted, playSfx, preloadSfx, toggleMuted } from "./sfx";
 import { detectLang, fmt, getLang, LANGS, setLang, t, type Lang } from "../i18n";
 
 type View = "home" | "play" | "about";
@@ -22,6 +22,7 @@ const CARD_ICON: Record<string, { kind: PieceKind; color: "w" | "b" }> = {
 };
 
 const SOLVED_KEY = "sherzod-solved";
+const BEST_KEY = "sherzod-best";
 
 function loadSolved(): Set<string> {
   try {
@@ -46,8 +47,65 @@ function markSolved(id: string): void {
   }
 }
 
+function loadBests(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(BEST_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, number> = {};
+    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        out[id] = Math.floor(value);
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function bestFor(id: string): number | null {
+  const value = loadBests()[id];
+  return typeof value === "number" ? value : null;
+}
+
+/** Saves best (fewest) moves; returns the stored best after update. */
+function recordBest(id: string, moves: number): number {
+  const bests = loadBests();
+  const prev = bests[id];
+  if (prev === undefined || moves < prev) {
+    bests[id] = moves;
+    try {
+      localStorage.setItem(BEST_KEY, JSON.stringify(bests));
+    } catch {
+      /* private mode */
+    }
+    return moves;
+  }
+  return prev;
+}
+
+function bestAttemptLine(id: string): string {
+  const copy = t();
+  const best = bestFor(id);
+  if (best === null) return copy.bestAttemptEmpty;
+  return fmt(copy.bestAttempt, { moves: best });
+}
+
 const GLOBE_SVG =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="12" rx="4" ry="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 12h18M12 3c2.8 3.2 2.8 14.8 0 18M12 3c-2.8 3.2-2.8 14.8 0 18" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>';
+
+const SOUND_ON_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h3.2L12 18.5V5.5L7.2 10H4z" fill="currentColor"/><path d="M15.2 9.2a3.4 3.4 0 0 1 0 5.6M17.6 6.6a6.4 6.4 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+
+const SOUND_OFF_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h3.2L12 18.5V5.5L7.2 10H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+
+function soundToggleBtn(ariaLabel: string): string {
+  const muted = isMuted();
+  return `<button type="button" class="icon-btn${muted ? " is-muted" : ""}" data-act="mute" aria-label="${ariaLabel}" aria-pressed="${muted ? "true" : "false"}">${muted ? SOUND_OFF_SVG : SOUND_ON_SVG}</button>`;
+}
 
 function parsePath(rawPath: string): { view: View; id?: string } {
   const raw = rawPath.replace(/^#/, "") || "/";
@@ -145,8 +203,8 @@ export class App {
       this.path = raw.startsWith("/") ? raw : `/${raw}`;
       this.render();
     });
-    this.root.addEventListener("pointerdown", (e) => this.onPointerDown(e), { passive: true });
-    window.addEventListener("pointermove", (e) => this.onPointerMove(e));
+    this.root.addEventListener("pointerdown", (e) => this.onPointerDown(e), { passive: false });
+    window.addEventListener("pointermove", (e) => this.onPointerMove(e), { passive: false });
     window.addEventListener("pointerup", (e) => this.onPointerUp(e));
     window.addEventListener("pointercancel", (e) => this.onPointerUp(e));
     this.root.addEventListener("click", (e) => this.onClick(e));
@@ -284,7 +342,6 @@ export class App {
         <button type="button" class="mode-card ${theme} ${done}" data-play="${p.id}">
           <span class="mode-ico piece-${icon.color}"><img src="${pieceSrc(icon.kind, icon.color)}" alt=""></span>
           <span class="mode-name">${text.title}</span>
-          <span class="mode-sub">${fmt(copy.minMoves, { par: p.par })}</span>
         </button>`;
       })
       .join("");
@@ -300,17 +357,41 @@ export class App {
               ${langs}
             </div>
           </div>
+          ${soundToggleBtn(isMuted() ? copy.soundOn : copy.soundOff)}
         </header>
         <div class="hero">
-          <div class="crest" aria-hidden="true"><img src="./img/queen.svg" alt=""></div>
+          <div class="crest" aria-hidden="true"><img src="./img/knight-crest.png?v=10" alt="" width="76" height="76"></div>
           <h1 id="logo">${copy.homeTitle}</h1>
         </div>
         <div class="mode-grid">${cards}</div>
+        <button type="button" class="how-chip" data-act="how">${copy.howToPlay}</button>
         <div class="home-foot">
           <p class="home-author">${copy.footer}</p>
           <p class="home-credit">${copy.homeCredit}</p>
         </div>
-      </section>`;
+      </section>
+      <div class="sheet sheet-center" id="how-sheet" data-modal hidden>
+        ${this.howMarkup()}
+      </div>`;
+  }
+
+  private howMarkup(): string {
+    const copy = t();
+    return `
+      <div class="sheet-card">
+        <button type="button" class="sheet-x" data-close="how-sheet" aria-label="${copy.back}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+        <h2>${copy.howToPlay}</h2>
+        <div class="how-block">
+          <h3>${copy.howObjectiveTitle}</h3>
+          <p>${copy.howObjectiveBody}</p>
+        </div>
+        <div class="how-block">
+          <h3>${copy.howRulesTitle}</h3>
+          <p>${copy.howRulesBody}</p>
+        </div>
+      </div>`;
   }
 
   private playView(puzzle: Puzzle): string {
@@ -321,6 +402,7 @@ export class App {
       <section id="screen-play" class="screen">
         <header class="hud">
           <button type="button" class="icon-btn" data-act="back" aria-label="${copy.back}">‹</button>
+          ${soundToggleBtn(isMuted() ? copy.soundOn : copy.soundOff)}
         </header>
         <p class="play-label">${text.title}</p>
         <p class="play-goal">${text.goal}</p>
@@ -333,11 +415,12 @@ export class App {
         <div class="board-meters">
           <div id="cronometro">${formatTime(game.seconds)}</div>
           <div id="contador">${copy.moves} ${game.moves}</div>
-          <div id="minimo">${fmt(copy.minMoves, { par: puzzle.par })}</div>
         </div>
         <footer class="play-bar">
+          <button type="button" id="undo" data-act="undo" ${game.history.length === 0 ? "disabled" : ""}>${copy.undo}</button>
           <button type="button" id="reset" data-act="reset">${copy.reset}</button>
         </footer>
+        <p class="best-mark" id="mejor-marca">${bestAttemptLine(puzzle.id)}</p>
       </section>
       <div class="sheet${game.won ? " open" : ""}" data-modal ${game.won ? "" : "hidden"}>
         ${this.victoryMarkup(game)}
@@ -354,12 +437,17 @@ export class App {
         return `<li class="${done}">${copy.groups[g as "N" | "B" | "R"]}</li>`;
       })
       .join("");
-    return `<div class="phase-wrap"><p class="phase-label">${copy.groupsPlaced}</p><ul class="phases" id="fases">${items}</ul></div>`;
+    return `<div class="phase-wrap"><p class="phase-label">${copy.piecesPlaced}</p><ul class="phases" id="fases">${items}</ul></div>`;
   }
 
   private victoryMarkup(game: Game): string {
     const copy = t();
     const beat = game.moves <= game.puzzle.par;
+    const best = bestFor(game.puzzle.id);
+    const bestLine =
+      best !== null
+        ? `<p class="best-mark in-sheet">${fmt(copy.bestAttempt, { moves: best })}</p>`
+        : "";
     return `
       <div class="sheet-card">
         <p class="eyebrow">${beat ? copy.onPar : copy.solved}</p>
@@ -369,6 +457,7 @@ export class App {
           time: formatTime(game.seconds),
           par: game.puzzle.par,
         })}</p>
+        ${bestLine}
         <div class="modal-actions">
           <button type="button" class="solid" data-act="reset">${copy.playAgain}</button>
           <button type="button" class="ghost" data-act="back">${copy.allPuzzles}</button>
@@ -414,6 +503,8 @@ export class App {
     if (!square || square.classList.contains("blocked")) return;
     const hasPiece = Boolean(this.game.board[pos.r][pos.c].piece);
     if (!hasPiece) return;
+
+    event.preventDefault();
     preloadSfx();
     this.drag = {
       from: pos,
@@ -424,35 +515,63 @@ export class App {
       origin: square,
       selectSound: false,
     };
+
+    try {
+      square.setPointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    // Floating piece follows the finger/cursor as soon as you grab it.
+    this.beginDragGhost(event.clientX, event.clientY);
+  }
+
+  private beginDragGhost(clientX: number, clientY: number): void {
+    if (!this.drag || !this.game || this.ghost) return;
+    this.drag.active = true;
+    this.suppressClick = true;
+    document.body.classList.add("is-dragging");
+    this.drag.origin.classList.add("dragging");
+
+    if (this.game.selected?.r !== this.drag.from.r || this.game.selected?.c !== this.drag.from.c) {
+      const result = this.game.select(this.drag.from);
+      if (result === "selected") {
+        if (!this.drag.selectSound) {
+          playSfx("select");
+          this.drag.selectSound = true;
+        }
+        this.paintHighlights();
+      } else {
+        this.applyResult(result);
+      }
+    } else {
+      this.paintHighlights();
+    }
+
+    const piece = this.drag.origin.querySelector(".piece");
+    const ghost = document.createElement("div");
+    ghost.className = "drag-ghost";
+    const size = this.drag.origin.getBoundingClientRect().width;
+    ghost.style.setProperty("--ghost", `${size}px`);
+    if (piece) ghost.appendChild(piece.cloneNode(true));
+    document.body.appendChild(ghost);
+    this.ghost = ghost;
+    ghost.style.left = `${clientX}px`;
+    ghost.style.top = `${clientY}px`;
+    this.markDropTarget(clientX, clientY);
   }
 
   private onPointerMove(event: PointerEvent): void {
     if (!this.drag || event.pointerId !== this.drag.pointerId || !this.game) return;
-    const dx = event.clientX - this.drag.startX;
-    const dy = event.clientY - this.drag.startY;
-    if (!this.drag.active && Math.hypot(dx, dy) > 14) {
-      this.drag.active = true;
-      this.suppressClick = true;
-      document.body.classList.add("is-dragging");
-      this.drag.origin.classList.add("dragging");
-      try {
-        this.drag.origin.setPointerCapture(event.pointerId);
-      } catch {
-        /* ignore */
+    if (this.drag.active) {
+      event.preventDefault();
+    }
+    if (!this.drag.active) {
+      const dx = event.clientX - this.drag.startX;
+      const dy = event.clientY - this.drag.startY;
+      if (Math.hypot(dx, dy) > 4) {
+        this.beginDragGhost(event.clientX, event.clientY);
       }
-      if (this.game.selected?.r !== this.drag.from.r || this.game.selected?.c !== this.drag.from.c) {
-        this.applyResult(this.game.select(this.drag.from));
-      }
-      const piece = this.drag.origin.querySelector(".piece");
-      const ghost = document.createElement("div");
-      ghost.className = "drag-ghost";
-      const size = this.drag.origin.getBoundingClientRect().width;
-      ghost.style.setProperty("--ghost", `${size}px`);
-      if (piece) ghost.appendChild(piece.cloneNode(true));
-      document.body.appendChild(ghost);
-      this.ghost = ghost;
-      ghost.style.left = `${event.clientX}px`;
-      ghost.style.top = `${event.clientY}px`;
     }
     if (this.drag.active && this.ghost) {
       this.ghost.style.left = `${event.clientX}px`;
@@ -490,8 +609,14 @@ export class App {
       /* already released */
     }
 
-    if (!drag.active) return;
-    if (!this.game) return;
+    if (!drag.active) {
+      this.suppressClick = false;
+      return;
+    }
+    if (!this.game) {
+      this.suppressClick = false;
+      return;
+    }
     const destEl = document.elementFromPoint(event.clientX, event.clientY);
     const dest = isPos(destEl);
     if (dest && (dest.r !== drag.from.r || dest.c !== drag.from.c)) {
@@ -499,14 +624,20 @@ export class App {
     } else {
       this.paintHighlights();
     }
+    // If no click follows (common after drag), don't leave suppressClick stuck.
+    window.setTimeout(() => {
+      this.suppressClick = false;
+    }, 0);
   }
 
   private onClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    // Drag sets suppressClick to ignore the synthetic board click after pointerup.
+    // Do not swallow chrome controls (back, undo, reset, mute, etc.).
     if (this.suppressClick) {
       this.suppressClick = false;
-      return;
+      if (target.closest(".sq, .board, #tablero, #tablero-container")) return;
     }
-    const target = event.target as HTMLElement;
     const closeId = target.closest<HTMLElement>("[data-close]")?.dataset.close;
     if (closeId) {
       this.closeSheet(this.root.querySelector<HTMLElement>(`#${closeId}`));
@@ -536,8 +667,26 @@ export class App {
       if (menu) menu.hidden = !this.langOpen;
       return;
     }
+    if (act === "mute") {
+      event.stopPropagation();
+      toggleMuted();
+      this.render(false);
+      return;
+    }
+    if (act === "how") {
+      const sheet = this.root.querySelector<HTMLElement>("#how-sheet");
+      if (sheet) {
+        sheet.hidden = false;
+        sheet.classList.add("open");
+      }
+      return;
+    }
     if (act === "back") {
       this.routeTo("/");
+      return;
+    }
+    if (act === "undo" && this.game) {
+      if (this.game.undo()) this.syncPlay(false);
       return;
     }
     if (act === "reset" && this.game) {
@@ -558,6 +707,11 @@ export class App {
   private onKey(event: KeyboardEvent): void {
     if (event.key === "Escape" && this.consumeBack()) return;
     if (!this.game) return;
+    if ((event.key === "z" || event.key === "Z") && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      if (this.game.undo()) this.syncPlay(false);
+      return;
+    }
     if (event.key === "Escape") {
       this.game.deselect();
       this.syncPlay(false);
@@ -579,15 +733,20 @@ export class App {
       this.root.querySelector(".board-stage")?.insertAdjacentHTML("afterend", phasesHtml);
     }
     const modal = this.root.querySelector<HTMLElement>("[data-modal]");
+    if (won) {
+      markSolved(game.puzzle.id);
+      recordBest(game.puzzle.id, game.moves);
+      this.stopClock();
+    } else {
+      this.startClock();
+    }
     if (modal) {
       modal.hidden = !game.won;
       modal.classList.toggle("open", game.won);
       modal.innerHTML = this.victoryMarkup(game);
     }
-    if (won) {
-      markSolved(game.puzzle.id);
-      this.stopClock();
-    }
+    const bestEl = this.root.querySelector("#mejor-marca");
+    if (bestEl) bestEl.textContent = bestAttemptLine(game.puzzle.id);
   }
 
   private patchStats(): void {
@@ -595,8 +754,12 @@ export class App {
     if (!game) return;
     const time = this.root.querySelector("#cronometro");
     const moves = this.root.querySelector("#contador");
+    const undoBtn = this.root.querySelector<HTMLButtonElement>("#undo");
+    const bestEl = this.root.querySelector("#mejor-marca");
     if (time) time.textContent = formatTime(game.seconds);
     if (moves) moves.textContent = `${t().moves} ${game.moves}`;
+    if (undoBtn) undoBtn.disabled = game.history.length === 0;
+    if (bestEl) bestEl.textContent = bestAttemptLine(game.puzzle.id);
   }
 
   private startClock(): void {
