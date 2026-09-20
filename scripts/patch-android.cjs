@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, "..");
 const ANDROID = path.join(ROOT, "android-app");
 const APP = path.join(ANDROID, "app");
 const SRC = path.join(APP, "src", "main");
-const PKG = "com.metamovidas.sherzod";
+const PKG = "com.metamovidas.chesspuzzles";
 const APP_NAME = "Chess Puzzles";
 const PASS = "SherzodMetaUpload2026";
 
@@ -86,8 +86,10 @@ android {`
             signingConfig signingConfigs.release`
     );
   }
-  s = s.replace(/versionCode \d+/, "versionCode 5");
-  s = s.replace(/versionName "[^"]+"/, 'versionName "1.0.4"');
+  s = s.replace(/namespace\s+"[^"]+"/, `namespace "${PKG}"`);
+  s = s.replace(/applicationId\s+"[^"]+"/, `applicationId "${PKG}"`);
+  s = s.replace(/versionCode \d+/, "versionCode 19");
+  s = s.replace(/versionName "[^"]+"/, 'versionName "1.0.18"');
   fs.writeFileSync(appGradle, s);
   console.log("edit android/app/build.gradle");
 }
@@ -192,31 +194,27 @@ function patchStyles() {
     <color name="colorPrimary">#0E1A12</color>
     <color name="colorPrimaryDark">#0E1A12</color>
     <color name="colorAccent">#E0C36A</color>
-    <color name="splash_bg">#0E1A12</color>
+    <color name="splash_bg">#000000</color>
 </resources>
 `);
 }
 
 function copyIcons() {
-  const { Resvg } = require("@resvg/resvg-js");
-  const svg = fs.readFileSync(path.join(ROOT, "public", "favicon.svg"), "utf8");
-  function raster(size) {
-    const out = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">${svg.replace(/<svg[^>]*>/, "").replace("</svg>", "")}</svg>`;
-    return new Resvg(out, { fitTo: { mode: "width", value: size } }).render().asPng();
+  const iconPath = path.join(ROOT, "resources", "icon.png");
+  const fgPath = path.join(ROOT, "resources", "icon-foreground.png");
+  if (!fs.existsSync(iconPath) || !fs.existsSync(fgPath)) {
+    throw new Error("Faltan resources/icon.png o icon-foreground.png (npm run icons)");
   }
-  const dens = { "mipmap-mdpi": 48, "mipmap-hdpi": 72, "mipmap-xhdpi": 96, "mipmap-xxhdpi": 144, "mipmap-xxxhdpi": 192 };
-  for (const [folder, size] of Object.entries(dens)) {
-    const dir = path.join(SRC, "res", folder);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "ic_launcher.png"), raster(size));
-    fs.writeFileSync(path.join(dir, "ic_launcher_round.png"), raster(size));
-    fs.writeFileSync(path.join(dir, "ic_launcher_foreground.png"), raster(Math.round(size * 1.5)));
-  }
+  const { spawnSync } = require("child_process");
+  const apply = path.join(ROOT, "scripts", "apply-android-icons.py");
+  const pr = spawnSync("python", [apply, SRC], { cwd: ROOT, stdio: "inherit", shell: true });
+  if (pr.status) process.exit(pr.status || 1);
+
   const anyDpi = path.join(SRC, "res", "mipmap-anydpi-v26");
   fs.mkdirSync(anyDpi, { recursive: true });
   const adaptive = `<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
+    <background android:drawable="@mipmap/ic_launcher_background"/>
     <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
 </adaptive-icon>
 `;
@@ -224,32 +222,89 @@ function copyIcons() {
   fs.writeFileSync(path.join(anyDpi, "ic_launcher_round.xml"), adaptive);
   write(path.join(SRC, "res", "values", "ic_launcher_background.xml"), `<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0E1A12</color>
+    <color name="ic_launcher_background">#000000</color>
 </resources>
 `);
-  function splashPng(w, h) {
-    const svgSplash = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-      <rect width="${w}" height="${h}" fill="#0e1a12"/>
-      <g transform="translate(${w / 2 - 160} ${h / 2 - 210}) scale(5)">
-        ${svg.replace(/<svg[^>]*>/, "").replace("</svg>", "")}
-      </g>
-    </svg>`;
-    return new Resvg(svgSplash, { fitTo: { mode: "width", value: w } }).render().asPng();
-  }
-  const splashMap = {
-    drawable: [480, 800],
-    "drawable-port-mdpi": [320, 480],
-    "drawable-port-hdpi": [480, 800],
-    "drawable-port-xhdpi": [720, 1280],
-    "drawable-port-xxhdpi": [1080, 1920],
-    "drawable-land-mdpi": [480, 320],
-    "drawable-land-hdpi": [800, 480],
-    "drawable-land-xhdpi": [1280, 720]
-  };
-  for (const [folder, [w, h]] of Object.entries(splashMap)) {
-    const dir = path.join(SRC, "res", folder);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "splash.png"), splashPng(w, h));
+  write(path.join(SRC, "res", "drawable", "ic_launcher_background.xml"), `<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#000000"
+        android:endColor="#1C1C1E" />
+</shape>
+`);
+}
+
+function patchMainActivity() {
+  const pkgPath = PKG.split(".").join(path.sep);
+  const javaRoot = path.join(SRC, "java");
+  const destDir = path.join(javaRoot, pkgPath);
+  const dest = path.join(destDir, "MainActivity.java");
+  write(dest, `package ${PKG};
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.View;
+import android.webkit.WebView;
+import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        splash.setKeepOnScreenCondition(() -> false);
+        super.onCreate(savedInstanceState);
+
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.parseColor("#0e1a12"));
+
+        final View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            Insets cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+            int bottom = Math.max(nav.bottom, cutout.bottom);
+            v.setPadding(0, 0, 0, bottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        focusWebView();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        focusWebView();
+    }
+
+    private void focusWebView() {
+        if (getBridge() == null) return;
+        WebView webView = getBridge().getWebView();
+        if (webView == null) return;
+        webView.setClickable(true);
+        webView.setFocusable(true);
+        webView.setFocusableInTouchMode(true);
+        webView.requestFocus();
+    }
+}
+`);
+
+  // Remove old package tree leftovers so Gradle doesn't compile both.
+  const stale = path.join(javaRoot, "com", "metamovidas", "sherzod");
+  if (fs.existsSync(stale) && PKG !== "com.metamovidas.sherzod") {
+    fs.rmSync(stale, { recursive: true, force: true });
+    console.log("removed stale java package com.metamovidas.sherzod");
   }
 }
 
@@ -261,6 +316,7 @@ function main() {
   ensureKeystore();
   patchGradle();
   patchManifest();
+  patchMainActivity();
   patchStrings();
   patchStyles();
   copyIcons();
@@ -268,11 +324,11 @@ function main() {
   if (fs.existsSync(vars)) {
     let s = fs.readFileSync(vars, "utf8");
     s = s.replace(/minSdkVersion = \d+/, "minSdkVersion = 24");
-    s = s.replace(/compileSdkVersion = \d+/, "compileSdkVersion = 35");
-    s = s.replace(/targetSdkVersion = \d+/, "targetSdkVersion = 35");
+    s = s.replace(/compileSdkVersion = \d+/, "compileSdkVersion = 36");
+    s = s.replace(/targetSdkVersion = \d+/, "targetSdkVersion = 36");
     fs.writeFileSync(vars, s);
   }
-  console.log("Android parcheado");
+  console.log("Android parcheado (" + PKG + ")");
 }
 
 main();

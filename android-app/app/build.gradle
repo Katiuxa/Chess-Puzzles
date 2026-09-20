@@ -7,14 +7,14 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.metamovidas.sherzod"
+    namespace "com.metamovidas.chesspuzzles"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.metamovidas.sherzod"
+        applicationId "com.metamovidas.chesspuzzles"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.0.5"
+        versionCode 19
+        versionName "1.0.18"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
