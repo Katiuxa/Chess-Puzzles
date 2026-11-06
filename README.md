@@ -4,9 +4,9 @@ Puzles de composición de Sherzod Khaydarbekov.
 
 ## Web
 
-https://katiuxa.github.io/Chess-Puzzles/
+https://puzzleschess.vercel.app
 
-Fuentes en `src/`. GitHub Pages las compila con Vite.
+Fuentes en `src/`.
 
 ```bash
 npm ci
