@@ -3,8 +3,10 @@
 Android app of four single-player chess studies by Sherzod Khaydarbekov (2025).
 
 <p align="center">
-  <img src="store-assets/screenshots/01-home-menu.png" alt="Chess Puzzles menu" width="220">
-  <img src="store-assets/screenshots/02-play-rook-sacrifice.png" alt="Rook Sacrifice" width="220">
+  <img src="store-assets/screenshots/01-home-menu.png" alt="Chess Puzzles menu" width="560">
+</p>
+<p align="center">
+  <img src="store-assets/screenshots/02-play-rook-sacrifice.png" alt="Rook Sacrifice board" width="420">
 </p>
 
 Pieces move as they do in chess. Blocked squares belong to the board. Each study has one objective and an author's line.
